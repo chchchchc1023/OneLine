@@ -54,14 +54,14 @@ npm run build
 2. 在`.env.local`文件中填入你的配置：
 
 ```
-# API端点配置
-NEXT_PUBLIC_API_ENDPOINT=https://api.example.com/v1/chat/completions
+# API端点配置（后端使用，不暴露给前端）
+API_ENDPOINT=https://api.example.com/v1/chat/completions
 
-# API模型配置
-NEXT_PUBLIC_API_MODEL=gemini-2.0-pro-exp-search
+# API模型配置（后端使用，不暴露给前端）
+API_MODEL=gemini-2.0-pro-exp-search
 
-# API密钥配置
-NEXT_PUBLIC_API_KEY=your_api_key_here
+# API密钥配置（后端使用，不暴露给前端）
+API_KEY=your_api_key_here
 
 # 是否允许用户在前端配置API设置
 # 设置为"false"将禁止用户在前端修改API设置
