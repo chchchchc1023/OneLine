@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
+// 添加静态导出配置，解决"output: export"模式下的构建错误
+export const dynamic = 'force-static';
+
 // 支持OPTIONS请求，用于CORS预检
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
