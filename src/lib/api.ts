@@ -150,8 +150,13 @@ export async function fetchTimelineData(
     };
 
     try {
-      // 使用本地API代理而不是直接调用外部API
-      const response = await axios.post('/api/proxy', payload);
+      // 直接调用外部API而不是通过本地API代理
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
       const content = response.data.choices[0].message.content;
       return parseTimelineText(content);
     } catch (error) {
@@ -210,8 +215,13 @@ export async function fetchEventDetails(
     };
 
     try {
-      // 使用本地API代理而不是直接调用外部API
-      const response = await axios.post('/api/proxy', payload);
+      // 直接调用外部API而不是通过本地API代理
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
       return response.data.choices[0].message.content;
     } catch (error) {
       console.error("API请求失败:", error);
