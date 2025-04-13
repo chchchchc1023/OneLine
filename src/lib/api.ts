@@ -149,13 +149,9 @@ export async function fetchTimelineData(
       temperature: 0.7
     };
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    };
-
     try {
-      const response = await axios.post(endpoint, payload, { headers });
+      // 使用本地API代理而不是直接调用外部API
+      const response = await axios.post('/api/proxy', payload);
       const content = response.data.choices[0].message.content;
       return parseTimelineText(content);
     } catch (error) {
@@ -213,13 +209,9 @@ export async function fetchEventDetails(
       temperature: 0.7
     };
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    };
-
     try {
-      const response = await axios.post(endpoint, payload, { headers });
+      // 使用本地API代理而不是直接调用外部API
+      const response = await axios.post('/api/proxy', payload);
       return response.data.choices[0].message.content;
     } catch (error) {
       console.error("API请求失败:", error);

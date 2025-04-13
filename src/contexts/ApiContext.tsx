@@ -3,7 +3,7 @@
 import type React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ApiConfig } from '@/types';
-import { getEnvApiEndpoint, getEnvApiKey, getEnvApiModel, isUserConfigAllowed, getEnvAccessPassword } from '@/lib/env';
+import { isUserConfigAllowed, getEnvAccessPassword } from '@/lib/env';
 
 interface ApiContextType {
   apiConfig: ApiConfig;
@@ -45,17 +45,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   const [isPasswordProtected, setIsPasswordProtected] = useState<boolean>(false);
   const [isPasswordValidated, setIsPasswordValidated] = useState<boolean>(false);
 
-  // 初始化API配置，优先使用环境变量，然后是localStorage
+  // 初始化API配置，优先使用localStorage
   useEffect(() => {
     try {
       // 检查是否允许用户配置
       const userConfigAllowed = isUserConfigAllowed();
       setAllowUserConfig(userConfigAllowed);
 
-      // 获取环境变量配置
-      const envEndpoint = getEnvApiEndpoint();
-      const envModel = getEnvApiModel();
-      const envApiKey = getEnvApiKey();
+      // 获取环境变量中的访问密码
       const envAccessPassword = getEnvAccessPassword();
 
       // 设置是否启用密码保护
@@ -73,13 +70,6 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       // 初始化配置对象
       let initialConfig: ApiConfig = { ...defaultApiConfig };
 
-      // 如果环境变量中有配置，优先使用环境变量
-      if (envEndpoint) initialConfig.endpoint = envEndpoint;
-      if (envModel) initialConfig.model = envModel;
-      if (envApiKey) initialConfig.apiKey = envApiKey;
-      initialConfig.allowUserConfig = userConfigAllowed;
-      if (envAccessPassword) initialConfig.accessPassword = envAccessPassword;
-
       // 如果允许用户配置，尝试从localStorage加载
       if (userConfigAllowed && typeof window !== 'undefined') {
         // 只在客户端访问localStorage
@@ -88,11 +78,11 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           try {
             const parsedConfig = JSON.parse(storedConfig);
             
-            // 合并配置，环境变量优先级高于localStorage
+            // 使用localStorage中的配置
             initialConfig = {
-              endpoint: envEndpoint || parsedConfig.endpoint || '',
-              model: envModel || parsedConfig.model || defaultApiConfig.model,
-              apiKey: envApiKey || parsedConfig.apiKey || '',
+              endpoint: parsedConfig.endpoint || '',
+              model: parsedConfig.model || defaultApiConfig.model,
+              apiKey: parsedConfig.apiKey || '',
               allowUserConfig: userConfigAllowed,
               accessPassword: envAccessPassword || '',
             };
