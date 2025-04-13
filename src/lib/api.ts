@@ -133,6 +133,23 @@ function parseTimelineText(text: string): TimelineData {
   }
 }
 
+// 使用CORS代理发送请求
+function createProxiedRequest(url: string, data: any, headers: any) {
+  // 使用多个CORS代理服务，如果一个失败可以尝试另一个
+  const corsProxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://thingproxy.freeboard.io/fetch/',
+    'https://cors-proxy.htmldriven.com/?url='
+  ];
+  
+  // 默认使用第一个代理
+  const corsProxyUrl = corsProxies[0];
+  const targetUrl = encodeURIComponent(url);
+  const proxiedUrl = `${corsProxyUrl}${targetUrl}`;
+  
+  return axios.post(proxiedUrl, data, { headers });
+}
+
 export async function fetchTimelineData(
   query: string,
   apiConfig: ApiConfig
@@ -154,13 +171,20 @@ export async function fetchTimelineData(
       'Authorization': `Bearer ${apiKey}`
     };
 
-    const response = await axios.post(endpoint, payload, { headers });
-
-    // 提取AI响应内容
-    const content = response.data.choices[0].message.content;
-
-    // 解析文本响应
-    return parseTimelineText(content);
+    // 尝试直接请求，如果失败则使用代理
+    try {
+      const response = await axios.post(endpoint, payload, { headers });
+      const content = response.data.choices[0].message.content;
+      return parseTimelineText(content);
+    } catch (error) {
+      console.log("直接API请求失败，尝试使用CORS代理...");
+      // 使用代理发送请求
+      const response = await createProxiedRequest(endpoint, payload, headers);
+      // 提取AI响应内容
+      const content = response.data.choices[0].message.content;
+      // 解析文本响应
+      return parseTimelineText(content);
+    }
   } catch (error) {
     console.error("API request failed:", error);
     throw error;
@@ -217,10 +241,17 @@ export async function fetchEventDetails(
       'Authorization': `Bearer ${apiKey}`
     };
 
-    const response = await axios.post(endpoint, payload, { headers });
-
-    // 提取内容
-    return response.data.choices[0].message.content;
+    // 尝试直接请求，如果失败则使用代理
+    try {
+      const response = await axios.post(endpoint, payload, { headers });
+      return response.data.choices[0].message.content;
+    } catch (error) {
+      console.log("直接API请求失败，尝试使用CORS代理...");
+      // 使用代理发送请求
+      const response = await createProxiedRequest(endpoint, payload, headers);
+      // 提取内容
+      return response.data.choices[0].message.content;
+    }
   } catch (error) {
     console.error("API request failed:", error);
     throw error;
