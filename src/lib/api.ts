@@ -133,7 +133,6 @@ function parseTimelineText(text: string): TimelineData {
   }
 }
 
-// 将API密钥嵌入到请求体中，避免使用Authorization头
 export async function fetchTimelineData(
   query: string,
   apiConfig: ApiConfig
@@ -141,69 +140,27 @@ export async function fetchTimelineData(
   try {
     const { endpoint, model, apiKey } = apiConfig;
 
-    // 将API密钥嵌入到请求体中
     const payload = {
       model: model,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `请为以下事件创建时间轴：${query}` }
       ],
-      temperature: 0.7,
-      // 添加API密钥到请求体
-      api_key: apiKey
+      temperature: 0.7
     };
 
     const headers = {
-      'Content-Type': 'application/json'
-      // 不再使用Authorization头
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
     };
 
     try {
-      // 尝试直接请求
       const response = await axios.post(endpoint, payload, { headers });
       const content = response.data.choices[0].message.content;
       return parseTimelineText(content);
     } catch (error) {
-      console.log("直接API请求失败，尝试使用备用方法...");
-      
-      // 尝试使用URL参数传递API密钥
-      const urlWithKey = `${endpoint}?api-key=${encodeURIComponent(apiKey)}`;
-      const payloadWithoutKey = {
-        model: model,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `请为以下事件创建时间轴：${query}` }
-        ],
-        temperature: 0.7
-      };
-      
-      try {
-        const response = await axios.post(urlWithKey, payloadWithoutKey, { headers });
-        const content = response.data.choices[0].message.content;
-        return parseTimelineText(content);
-      } catch (secondError) {
-        console.log("备用方法也失败，尝试使用JSONP方式...");
-        
-        // 创建一个包含完整请求的表单数据
-        const formData = new FormData();
-        formData.append('url', endpoint);
-        formData.append('api_key', apiKey);
-        formData.append('model', model);
-        formData.append('system_prompt', SYSTEM_PROMPT);
-        formData.append('user_prompt', `请为以下事件创建时间轴：${query}`);
-        formData.append('temperature', '0.7');
-        
-        // 使用公共JSONP代理服务
-        const jsonpProxyUrl = 'https://jsonp.afeld.me/';
-        const response = await axios.post(jsonpProxyUrl, formData);
-        
-        // 解析响应
-        if (response.data && response.data.content) {
-          return parseTimelineText(response.data.content);
-        } else {
-          throw new Error("无法从JSONP代理获取有效响应");
-        }
-      }
+      console.error("API请求失败:", error);
+      throw error;
     }
   } catch (error) {
     console.error("API request failed:", error);
@@ -219,7 +176,6 @@ export async function fetchEventDetails(
   try {
     const { endpoint, model, apiKey } = apiConfig;
 
-    // 将API密钥嵌入到请求体中
     const payload = {
       model: model,
       messages: [
@@ -254,113 +210,20 @@ export async function fetchEventDetails(
         },
         { role: "user", content: `请详细分析以下事件的背景、过程、影响及各方观点：${query}` }
       ],
-      temperature: 0.7,
-      // 添加API密钥到请求体
-      api_key: apiKey
+      temperature: 0.7
     };
 
     const headers = {
-      'Content-Type': 'application/json'
-      // 不再使用Authorization头
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
     };
 
     try {
-      // 尝试直接请求
       const response = await axios.post(endpoint, payload, { headers });
       return response.data.choices[0].message.content;
     } catch (error) {
-      console.log("直接API请求失败，尝试使用备用方法...");
-      
-      // 尝试使用URL参数传递API密钥
-      const urlWithKey = `${endpoint}?api-key=${encodeURIComponent(apiKey)}`;
-      const payloadWithoutKey = {
-        model: model,
-        messages: [
-          {
-            role: "system",
-            content: `你是一个专业的历史事件分析助手，专长于提供详细的事件分析和背景信息。
-请按照以下格式回答用户询问的特定事件：
-
-===背景===
-事件的背景和前因
-
-===详细内容===
-事件的主要内容，按时间顺序或重要性组织
-
-===参与方===
-事件的主要参与者、相关人物及其立场和作用
-
-===影响===
-事件的短期和长期影响
-
-===相关事实===
-与事件相关的重要事实或数据
-
-请注意：
-1. 使用清晰的段落结构，避免过长的段落
-2. 保持客观中立的叙述，多角度展示事件
-3. 支持使用Markdown语法增强可读性：
-   - **粗体** 用于强调重要内容
-   - *斜体* 用于引用或细微强调
-   - 使用换行符增加可读性
-4. 回答应全面但精炼，突出重点，避免冗余`
-          },
-          { role: "user", content: `请详细分析以下事件的背景、过程、影响及各方观点：${query}` }
-        ],
-        temperature: 0.7
-      };
-      
-      try {
-        const response = await axios.post(urlWithKey, payloadWithoutKey, { headers });
-        return response.data.choices[0].message.content;
-      } catch (secondError) {
-        console.log("备用方法也失败，尝试使用JSONP方式...");
-        
-        // 创建一个包含完整请求的表单数据
-        const formData = new FormData();
-        formData.append('url', endpoint);
-        formData.append('api_key', apiKey);
-        formData.append('model', model);
-        formData.append('system_prompt', `你是一个专业的历史事件分析助手，专长于提供详细的事件分析和背景信息。
-请按照以下格式回答用户询问的特定事件：
-
-===背景===
-事件的背景和前因
-
-===详细内容===
-事件的主要内容，按时间顺序或重要性组织
-
-===参与方===
-事件的主要参与者、相关人物及其立场和作用
-
-===影响===
-事件的短期和长期影响
-
-===相关事实===
-与事件相关的重要事实或数据
-
-请注意：
-1. 使用清晰的段落结构，避免过长的段落
-2. 保持客观中立的叙述，多角度展示事件
-3. 支持使用Markdown语法增强可读性：
-   - **粗体** 用于强调重要内容
-   - *斜体* 用于引用或细微强调
-   - 使用换行符增加可读性
-4. 回答应全面但精炼，突出重点，避免冗余`);
-        formData.append('user_prompt', `请详细分析以下事件的背景、过程、影响及各方观点：${query}`);
-        formData.append('temperature', '0.7');
-        
-        // 使用公共JSONP代理服务
-        const jsonpProxyUrl = 'https://jsonp.afeld.me/';
-        const response = await axios.post(jsonpProxyUrl, formData);
-        
-        // 解析响应
-        if (response.data && response.data.content) {
-          return response.data.content;
-        } else {
-          throw new Error("无法从JSONP代理获取有效响应");
-        }
-      }
+      console.error("API请求失败:", error);
+      throw error;
     }
   } catch (error) {
     console.error("API request failed:", error);
